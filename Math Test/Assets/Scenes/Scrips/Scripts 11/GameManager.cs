@@ -12,23 +12,22 @@ public class GameManager : MonoBehaviour
     public Rigidbody player2Ball;
 
     [Header("Target Balls")]
-    public List<Rigidbody> targetBalls; // ¸ÂÇô¾ß ÇÏ´Â »¡°£ °ø µîÀÇ ¸®½ºÆ®
+    public List<Rigidbody> targetBalls = new List<Rigidbody>(); // ì•ˆì „í•˜ê²Œ ë¯¸ë¦¬ ìƒì„±
     private List<Rigidbody> allBalls = new List<Rigidbody>();
 
-    [Header("UI Elements")]
-    public Text turnText;
-    public Text scoreText;
-    public Text winText;
+    [Header("UI Elements (Text or TextMeshPro)")]
+    public GameObject turnText;
+    public GameObject scoreText;
+    public GameObject winText;
 
-    // °ÔÀÓ »óÅÂ º¯¼ö
+    // ê²Œì„ ìƒíƒœ ë³€ìˆ˜
     public int currentTurn = 1; // 1 = 1P, 2 = 2P
     public int p1Score = 0;
     public int p2Score = 0;
-
+    
     public bool isBallsMoving = false;
-    private bool hasTurnEndedTurnCheck = false;
 
-    // ÀÌ¹ø ÅÏ Ãæµ¹ ±â·Ï Ã¼Å©¿ë (°ø¿¡ ºÎµúÈú ¶§¸¶´Ù °»½ÅµÊ)
+    // ì´ë²ˆ í„´ ì¶©ëŒ ê¸°ë¡ ì²´í¬ìš© (ê³µì— ë¶€ë”ªí ë•Œë§ˆë‹¤ ê°±ì‹ ë¨)
     [HideInInspector] public bool hitOpponent = false;
     [HideInInspector] public HashSet<GameObject> hitTargets = new HashSet<GameObject>();
 
@@ -40,63 +39,63 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        // ¸ğµç °øÀ» ÇÏ³ªÀÇ ¸®½ºÆ®·Î °ü¸®ÇÏ¿© Á¤Áö ¿©ºÎ È®ÀÎ
+        // ëª¨ë“  ê³µì„ í•˜ë‚˜ì˜ ë¦¬ìŠ¤íŠ¸ë¡œ ê´€ë¦¬í•˜ì—¬ ì •ì§€ ì—¬ë¶€ í™•ì¸
         allBalls.Add(player1Ball);
         allBalls.Add(player2Ball);
         allBalls.AddRange(targetBalls);
 
-        winText.gameObject.SetActive(false);
+        if (winText != null) winText.SetActive(false);
         UpdateUI();
     }
 
     void Update()
     {
-        if (p1Score >= 5 || p2Score >= 5) return; // °ÔÀÓ Á¾·á ½Ã Ã¼Å© Áß´Ü
+        if (p1Score >= 5 || p2Score >= 5) return; // ê²Œì„ ì¢…ë£Œ ì‹œ ì²´í¬ ì¤‘ë‹¨
 
         CheckBallsMoving();
     }
 
-    // 4. ¸ğµç °øÀÇ ¼Óµµ°¡ ÀÏÁ¤ °ª ÀÌÇÏÀÎÁö Ã¼Å©
+    // 4. ëª¨ë“  ê³µì˜ ì†ë„ê°€ ì¼ì • ê°’ ì´í•˜ì¸ì§€ ì²´í¬
     void CheckBallsMoving()
     {
         bool anyBallMoving = false;
-        float stopThreshold = 0.05f; // ÀÌ ¼Óµµ ÀÌÇÏ¸é ¸ØÃá °ÍÀ¸·Î °£ÁÖ
+        float stopThreshold = 0.05f; // ì´ ì†ë„ ì´í•˜ë©´ ë©ˆì¶˜ ê²ƒìœ¼ë¡œ ê°„ì£¼
 
         foreach (Rigidbody rb in allBalls)
         {
-            if (rb.linearVelocity.magnitude > stopThreshold)
+            if (rb != null && rb.linearVelocity.magnitude > stopThreshold)
             {
                 anyBallMoving = true;
                 break;
             }
         }
 
-        // °øµéÀÌ ¿òÁ÷ÀÌ´Ù°¡ ¹æ±İ ¸· ¸ğµÎ ¸ØÃá ½ÃÁ¡ °¨Áö
+        // ê³µë“¤ì´ ì›€ì§ì´ë‹¤ê°€ ë°©ê¸ˆ ë§‰ ëª¨ë‘ ë©ˆì¶˜ ì‹œì  ê°ì§€
         if (isBallsMoving && !anyBallMoving)
         {
             isBallsMoving = false;
-            EvaluateTurnResult(); // ÅÏ °á°ú Á¤»ê
+            EvaluateTurnResult(); // í„´ ê²°ê³¼ ì •ì‚°
         }
 
         isBallsMoving = anyBallMoving;
     }
 
-    // 5, 6¹ø Á¶°Ç: Á¡¼ö °è»ê ¹× ÅÏ ±³Ã¼
+    // 5, 6ë²ˆ ì¡°ê±´: ì ìˆ˜ ê³„ì‚° ë° í„´ êµì²´
     void EvaluateTurnResult()
     {
         if (currentTurn == 1)
         {
-            if (hitOpponent) // »ó´ë °øÀ» ¸ÂÃß¸é °¨Á¡ (-1)
+            if (hitOpponent) // ìƒëŒ€ ê³µì„ ë§ì¶”ë©´ ê°ì  (-1)
             {
                 p1Score = Mathf.Max(0, p1Score - 1);
             }
-            // »ó´ë °øÀ» ¾È °Çµå¸®°í Target °øÀ» '¸ğµÎ' ¸ÂÃèÀ» ¶§ µæÁ¡ (+1)
-            else if (hitTargets.Count == targetBalls.Count)
+            // ìƒëŒ€ ê³µì„ ì•ˆ ê±´ë“œë¦¬ê³  Target ê³µì„ 'ëª¨ë‘' ë§ì·„ì„ ë•Œ ë“ì  (+1)
+            else if (hitTargets.Count == targetBalls.Count) 
             {
                 p1Score++;
             }
         }
-        else // 2P ÅÏÀÏ ¶§
+        else // 2P í„´ì¼ ë•Œ
         {
             if (hitOpponent)
             {
@@ -110,31 +109,67 @@ public class GameManager : MonoBehaviour
 
         UpdateUI();
 
-        // 7. 5Á¡¿¡ µµ´ŞÇÏ¸é °ÔÀÓ Á¾·á
+        // 7. 5ì ì— ë„ë‹¬í•˜ë©´ ê²Œì„ ì¢…ë£Œ ë° ìŠ¹ë¦¬ í…ìŠ¤íŠ¸ í‘œì‹œ
         if (p1Score >= 5)
         {
-            winText.text = "PLAYER 1 WIN!";
-            winText.gameObject.SetActive(true);
+            if (winText != null) winText.SetActive(true);
+
+            var tText = winText.GetComponent<Text>();
+            if (tText != null) tText.text = "PLAYER 1 WIN!";
+            else 
+            {
+                var tmpText = winText.GetComponent<TMPro.TMP_Text>();
+                if (tmpText != null) tmpText.text = "PLAYER 1 WIN!";
+            }
             return;
         }
+        
         if (p2Score >= 5)
         {
-            winText.text = "PLAYER 2 WIN!";
-            winText.gameObject.SetActive(true);
+            if (winText != null) winText.SetActive(true);
+
+            var tText = winText.GetComponent<Text>();
+            if (tText != null) tText.text = "PLAYER 2 WIN!";
+            else 
+            {
+                var tmpText = winText.GetComponent<TMPro.TMP_Text>();
+                if (tmpText != null) tmpText.text = "PLAYER 2 WIN!";
+            }
             return;
         }
 
-        // ÅÏ ÀüÈ¯ ¹× µ¥ÀÌÅÍ ÃÊ±âÈ­
+        // í„´ ì „í™˜ ë° ë°ì´í„° ì´ˆê¸°í™”
         currentTurn = (currentTurn == 1) ? 2 : 1;
         hitOpponent = false;
         hitTargets.Clear();
-
+        
         UpdateUI();
     }
 
     void UpdateUI()
     {
-        turnText.text = $"CURRENT TURN: {currentTurn}P";
-        scoreText.text = $"1P Score: {p1Score}  |  2P Score: {p2Score}";
+        // Turn Text ì—…ë°ì´íŠ¸ (ì¼ë°˜ Text ë° TextMeshPro ë‘˜ ë‹¤ ì§€ì›)
+        if (turnText != null)
+        {
+            var tText = turnText.GetComponent<Text>();
+            if (tText != null) tText.text = $"CURRENT TURN: {currentTurn}P";
+            else 
+            {
+                var tmpText = turnText.GetComponent<TMPro.TMP_Text>();
+                if (tmpText != null) tmpText.text = $"CURRENT TURN: {currentTurn}P";
+            }
+        }
+
+        // Score Text ì—…ë°ì´íŠ¸
+        if (scoreText != null)
+        {
+            var sText = scoreText.GetComponent<Text>();
+            if (sText != null) sText.text = $"1P Score: {p1Score}  |  2P Score: {p2Score}";
+            else 
+            {
+                var tmpScore = scoreText.GetComponent<TMPro.TMP_Text>();
+                if (tmpScore != null) tmpScore.text = $"1P Score: {p1Score}  |  2P Score: {p2Score}";
+            }
+        }
     }
-}
+} // ì´ ë¶€ë¶„ ê´„í˜¸ê°€ ëˆ„ë½ë˜ì–´ ì—ëŸ¬ê°€ ë‚¬ë˜ ê²ƒì…ë‹ˆë‹¤!

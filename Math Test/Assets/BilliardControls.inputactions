@@ -1,0 +1,55 @@
+{
+    "version": 1,
+    "name": "BilliardControls",
+    "maps": [
+        {
+            "name": "Player",
+            "id": "4c9de4dd-072c-4984-ab2c-44e6dbea2b32",
+            "actions": [
+                {
+                    "name": "Click",
+                    "type": "Button",
+                    "id": "dd6aed1f-ae27-4928-bbf5-4d6448f60a93",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Move",
+                    "type": "Value",
+                    "id": "16c26f21-8339-453b-9075-a38e00e2f357",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "0c002cf4-2d24-49dc-954b-e533b1d060ea",
+                    "path": "<Mouse>/leftButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Click",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b187dc1b-d241-42cf-b19e-1f81a4a296de",
+                    "path": "<Mouse>/delta",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Move",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
