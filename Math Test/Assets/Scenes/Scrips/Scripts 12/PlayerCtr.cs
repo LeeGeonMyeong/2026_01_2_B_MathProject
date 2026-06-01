@@ -1,4 +1,4 @@
-using UnityEngine;          
+using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class PlayerCtr : MonoBehaviour
@@ -7,13 +7,16 @@ public class PlayerCtr : MonoBehaviour
     public float moveSpeed = 5f;
     private Rigidbody playerRb;
     private Vector3 moveInput;
-    private Vector3 lastMoveDirection = Vector3.forward;
 
-    [Header("Bomb Shooting")]
+    [Header("Ziggs Bomb (F Key)")]
     public GameObject bombPrefab;
     public Transform firePoint;
-    public float forwardForce = 10f; 
-    public float upwardForce = 8f;   
+    public float forwardForce = 10f;
+    public float upwardForce = 8f;
+
+    [Header("Mine Settings (G Key)")]
+    public GameObject minePrefab;       // 새로 만들 지뢰 프리팹
+    public float mineSpawnDistance = 3f;// 플레이어 정면 얼마나 먼 곳에 생성할지
 
     void Start()
     {
@@ -22,9 +25,9 @@ public class PlayerCtr : MonoBehaviour
 
     void Update()
     {
+        // 이동 입력 처리 (Both 설정 기준)
         float h = 0;
         float v = 0;
-
         if (Keyboard.current != null)
         {
             if (Keyboard.current.wKey.isPressed) v = 1f;
@@ -32,18 +35,18 @@ public class PlayerCtr : MonoBehaviour
             if (Keyboard.current.aKey.isPressed) h = -1f;
             if (Keyboard.current.dKey.isPressed) h = 1f;
         }
-        
         moveInput = new Vector3(h, 0f, v).normalized;
 
-        if (moveInput.magnitude > 0.1f)
-        {
-            lastMoveDirection = moveInput;
-        }
-
-        // F 키를 누를 때 이제 플레이어 몸통이 돌아가지 않습니다.
+        // F 키 : 기존 직스 폭탄 발사
         if (Keyboard.current != null && Keyboard.current.fKey.wasPressedThisFrame)
         {
             LaunchZiggsBomb();
+        }
+
+        // 💡 G 키 : 플레이어 정면 일정 거리에 지뢰 설치
+        if (Keyboard.current != null && Keyboard.current.gKey.wasPressedThisFrame)
+        {
+            SpawnMine();
         }
     }
 
@@ -54,7 +57,6 @@ public class PlayerCtr : MonoBehaviour
             Vector3 moveVelocity = moveInput * moveSpeed;
             playerRb.linearVelocity = new Vector3(moveVelocity.x, playerRb.linearVelocity.y, moveVelocity.z);
 
-            //  이동할 때만 몸통이 회전하도록 설정
             Quaternion newRotation = Quaternion.LookRotation(moveInput);
             playerRb.MoveRotation(Quaternion.Slerp(transform.rotation, newRotation, Time.deltaTime * 15f));
         }
@@ -67,19 +69,36 @@ public class PlayerCtr : MonoBehaviour
     void LaunchZiggsBomb()
     {
         if (bombPrefab == null) return;
-
-        //  핵심 수정: 폭탄 생성 위치(spawnPos)가 플레이어 콜라이더와 겹치지 않도록 정면(transform.forward)으로 조금 더 멀리 밀어서 생성합니다.
-        // firePoint가 등록되어 있다면 firePoint 위치를 최우선으로 사용합니다.
         Vector3 spawnPos = firePoint != null ? firePoint.position : transform.position + (transform.forward * 1.5f) + (Vector3.up * 0.5f);
-        
         GameObject bomb = Instantiate(bombPrefab, spawnPos, Quaternion.identity);
 
-        CustomBomb bombScript = bomb.GetComponent<CustomBomb>();
-        if (bombScript != null)
+        Rigidbody bombRb = bomb.GetComponent<Rigidbody>();
+        if (bombRb != null)
         {
-            // 플레이어가 실제로 바라보고 있는 정면 방향을 기준으로 발사 속도를 부여합니다.
             Vector3 launchDirection = (transform.forward * forwardForce) + (Vector3.up * upwardForce);
-            
+            bombRb.linearVelocity = launchDirection;
+        }
+    }
+
+    // 💡 지뢰 생성 함수
+    void SpawnMine()
+    {
+        if (minePrefab == null) return;
+
+        // 플레이어가 보고 있는 방향(transform.forward)으로 설정한 거리만큼 떨어진 바닥 높이에 생성
+        Vector3 spawnPos = transform.position + (transform.forward * mineSpawnDistance);
+        spawnPos.y = transform.position.y; // 플레이어의 발바닥 높이 정도로 정렬
+
+        Instantiate(minePrefab, spawnPos, Quaternion.identity);
+    }
+
+    // 💡 지뢰 폭발 시 플레이어를 밀어내기 위해 외부에 노출하는 함수
+    public void AddExplosionImpulse(Vector3 impulse)
+    {
+        if (playerRb != null)
+        {
+            // 순간적으로 폭발 힘을 플레이어 Rigidbody에 누적
+            playerRb.AddForce(impulse, ForceMode.Impulse);
         }
     }
 }
